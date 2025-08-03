@@ -1,5 +1,5 @@
 # app.py
-# Streamlit portfolio app for UK housing data (glas_wrangled.csv)
+# Streamlit portfolio app for UK housing data
 # ---------------------------------------------------------------
 # Features
 # - Global sidebar filters (date/area/type/price/tenure etc.)
@@ -14,7 +14,6 @@
 #
 # How to run
 #   streamlit run app.py
-# Place glas_wrangled.csv in the same folder, or use the file uploader.
 
 import io
 import math
@@ -31,15 +30,14 @@ import streamlit as st
 
 st.set_page_config(page_title="Gloucestershire Housing – Portfolio Dashboard", layout="wide")
 
-
 # -------------------------
 # Canonical schema + normaliser
 # -------------------------
 
 # Canonical HMLR column order/names your app expects
 PPD_CANONICAL_COLUMNS = [
-    "Transaction ID","Price","Date of Transfer","Postcode","Property Type","Old/New","Duration",
-    "PAON","SAON","Street","Locality","Town/City","District","County","PPD Category Type","Record Status"
+    "Transaction ID", "Price", "Date of Transfer", "Postcode", "Property Type", "Old/New", "Duration",
+    "PAON", "SAON", "Street", "Locality", "Town/City", "District", "County", "PPD Category Type", "Record Status"
 ]
 
 # Common header variants seen in Price Paid downloads (past & present)
@@ -107,6 +105,7 @@ PPD_DEFAULTS = {
     "Record Status": np.nan,
 }
 
+
 def _normalise_headers(cols):
     """
     Map incoming headers to canonical names.
@@ -125,6 +124,7 @@ def _normalise_headers(cols):
         norm.append(mapped or c)
     # Heuristic: if we mapped at least 4 typical columns, accept; else return None
     return norm if hits >= 4 else None
+
 
 def _coerce_schema(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -371,7 +371,8 @@ st.info(
     "(https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads). "
 )
 
-st.warning("Current data filtered to show housing trends for **Gloucestershire**. Feel free to download any file from uk price paid housing data, and upload via sidebar for analysis.")
+st.warning(
+    "Current data filtered to show housing trends for **Gloucestershire**. Feel free to download any file from uk price paid housing data, and upload via sidebar for analysis.")
 
 with st.sidebar:
     st.header("Data")
