@@ -18,12 +18,10 @@ from housing.ui.sections import (
     trends,
 )
 
-st.set_page_config(
-    page_title="Gloucestershire Housing – Portfolio Dashboard", layout="wide"
-)
+st.set_page_config(page_title="UK Housing Price Analysis", layout="wide")
 
 page_header(
-    title="UK Housing Data Trends Analysis",
+    title="UK Housing Price Analysis",
     author_md="By [Usama Shahid – LinkedIn](https://www.linkedin.com/in/reach-usama/)",
     intro_md=(
         "Use this dashboard to understand housing trends, compare areas, and inspect streets/postcodes.\n\n"
@@ -41,7 +39,7 @@ page_header(
 # Sidebar: Data + Filters
 # -------------------------
 with st.sidebar:
-    st.header("Data")
+    st.header("Price Data")
     file = st.file_uploader("Upload dataset (optional)", type=["csv"])  # noqa: E231
     df = load_data(file.read() if file else None)
 
@@ -119,10 +117,10 @@ with st.sidebar:
 
 # Apply filters
 mask = (
-           df["Date of Transfer"].between(
-               pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
-           )
-       ) & (df["Price"].between(price_range[0], price_range[1]))
+    df["Date of Transfer"].between(
+        pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
+    )
+) & (df["Price"].between(price_range[0], price_range[1]))
 if county:
     mask &= df["County"].isin(county)
 if district:
