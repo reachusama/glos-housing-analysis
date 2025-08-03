@@ -59,3 +59,10 @@ This app is built for users interested in:
 * Enable **winsorisation** to remove the impact of extreme values
 * Read the **caption under each section** – they help explain how visuals work
 * Export charts and tables from the **three-dot menu (⋮)** in any block
+
+---
+
+## Data Access URL
+```angular2html
+http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}.csv
+```
