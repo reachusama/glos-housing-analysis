@@ -25,8 +25,8 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
+# import statsmodels.api as sm
+# import statsmodels.formula.api as smf
 import streamlit as st
 
 st.set_page_config(page_title="Gloucestershire Housing – Portfolio Dashboard", layout="wide")
@@ -496,20 +496,21 @@ if nav == "Hedonic model":
     model_df["log_price"] = np.log(model_df[price_col])
 
     formula = "log_price ~ C(`Property Type`) + C(`Old/New`) + C(Duration) + C(Year) + C(Month) + C(Outward)"
-    try:
-        mod = smf.ols(formula=formula, data=model_df).fit()
-        st.text(mod.summary().as_text()[:4000])
-
-        # Extract categorical effects for display (Property Type and Old/New)
-        coefs = mod.params.filter(like="C(`Property Type`)").append(mod.params.filter(like="C(`Old/New`)"))
-        ef = coefs.reset_index()
-        ef.columns = ["Term", "Coefficient"]
-        ef["Premium %"] = (np.exp(ef["Coefficient"]) - 1.0) * 100
-        fig = px.bar(ef.sort_values("Premium %", ascending=False), x="Term", y="Premium %")
-        st.markdown("**Feature effects (exp(coef)−1)**")
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.warning(f"Model could not be fitted: {e}")
+    st.info("Work in progerss ...")
+    # try:
+    #     mod = smf.ols(formula=formula, data=model_df).fit()
+    #     st.text(mod.summary().as_text()[:4000])
+    #
+    #     # Extract categorical effects for display (Property Type and Old/New)
+    #     coefs = mod.params.filter(like="C(`Property Type`)").append(mod.params.filter(like="C(`Old/New`)"))
+    #     ef = coefs.reset_index()
+    #     ef.columns = ["Term", "Coefficient"]
+    #     ef["Premium %"] = (np.exp(ef["Coefficient"]) - 1.0) * 100
+    #     fig = px.bar(ef.sort_values("Premium %", ascending=False), x="Term", y="Premium %")
+    #     st.markdown("**Feature effects (exp(coef)−1)**")
+    #     st.plotly_chart(fig, use_container_width=True)
+    # except Exception as e:
+    #     st.warning(f"Model could not be fitted: {e}")
 
 # -------------------------
 # 8) Repeat-sales
