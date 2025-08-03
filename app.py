@@ -33,6 +33,128 @@ st.set_page_config(page_title="Gloucestershire Housing – Portfolio Dashboard",
 
 
 # -------------------------
+# Canonical schema + normaliser
+# -------------------------
+
+# Canonical HMLR column order/names your app expects
+PPD_CANONICAL_COLUMNS = [
+    "Transaction ID","Price","Date of Transfer","Postcode","Property Type","Old/New","Duration",
+    "PAON","SAON","Street","Locality","Town/City","District","County","PPD Category Type","Record Status"
+]
+
+# Common header variants seen in Price Paid downloads (past & present)
+PPD_HEADER_ALIASES = {
+    # id
+    "transaction unique identifier": "Transaction ID",
+    "transaction id": "Transaction ID",
+    # price
+    "price": "Price",
+    "amount": "Price",
+    # date
+    "date of transfer": "Date of Transfer",
+    "transfer date": "Date of Transfer",
+    "date": "Date of Transfer",
+    # postcode
+    "postcode": "Postcode",
+    "post code": "Postcode",
+    # property type
+    "property type": "Property Type",
+    "property_type": "Property Type",
+    # new/old
+    "old/new": "Old/New",
+    "new build": "Old/New",
+    "is new": "Old/New",
+    # tenure/duration
+    "duration": "Duration",
+    "tenure": "Duration",
+    # address parts
+    "paon": "PAON",
+    "primary addressable object name": "PAON",
+    "saon": "SAON",
+    "secondary addressable object name": "SAON",
+    "street": "Street",
+    "thoroughfare": "Street",
+    "locality": "Locality",
+    "town/city": "Town/City",
+    "town": "Town/City",
+    "city": "Town/City",
+    "district": "District",
+    "local authority": "District",
+    "county": "County",
+    # categories/status
+    "ppd category type": "PPD Category Type",
+    "record status - monthly file only": "Record Status",
+    "record status": "Record Status",
+}
+
+# Defaults for columns that might be missing
+PPD_DEFAULTS = {
+    "Transaction ID": None,
+    "Price": np.nan,
+    "Date of Transfer": pd.NaT,
+    "Postcode": np.nan,
+    "Property Type": np.nan,
+    "Old/New": np.nan,
+    "Duration": np.nan,
+    "PAON": np.nan,
+    "SAON": np.nan,
+    "Street": np.nan,
+    "Locality": np.nan,
+    "Town/City": np.nan,
+    "District": np.nan,
+    "County": np.nan,
+    "PPD Category Type": np.nan,
+    "Record Status": np.nan,
+}
+
+def _normalise_headers(cols):
+    """
+    Map incoming headers to canonical names.
+    If a file has no header (or nonsense), return None to trigger manual assignment.
+    """
+    norm = []
+    hits = 0
+    for c in cols:
+        if c is None:
+            norm.append(None)
+            continue
+        key = str(c).strip().lower()
+        mapped = PPD_HEADER_ALIASES.get(key)
+        if mapped:
+            hits += 1
+        norm.append(mapped or c)
+    # Heuristic: if we mapped at least 4 typical columns, accept; else return None
+    return norm if hits >= 4 else None
+
+def _coerce_schema(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure all canonical columns exist, correctly named.
+    Add missing columns with defaults.
+    """
+    # Rename headers using aliases where possible
+    renamed = {}
+    for c in df.columns:
+        key = str(c).strip().lower()
+        renamed[c] = PPD_HEADER_ALIASES.get(key, c)
+    df = df.rename(columns=renamed)
+
+    # Create any missing canonical columns
+    for c in PPD_CANONICAL_COLUMNS:
+        if c not in df.columns:
+            df[c] = PPD_DEFAULTS[c]
+
+    # Reorder to canonical
+    df = df[PPD_CANONICAL_COLUMNS]
+
+    # Type fixes
+    df["Price"] = pd.to_numeric(df["Price"], errors="coerce")
+    # date parsing may already happen in _coerce_datetime, but do a first pass here
+    df["Date of Transfer"] = pd.to_datetime(df["Date of Transfer"], errors="coerce")
+
+    return df
+
+
+# -------------------------
 # Helpers
 # -------------------------
 
@@ -162,10 +284,44 @@ def _expand_hmlr_columns(df, inplace=True):
 
 @st.cache_data(show_spinner=False)
 def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
+    # Step 1: read raw CSV safely
     if uploaded is not None:
-        df = pd.read_csv(io.BytesIO(uploaded))
+        raw = io.BytesIO(uploaded)
     else:
-        df = pd.read_csv("data/gloucestershire.csv")
+        raw = "data/gloucestershire.csv"
+
+    # Try reading with header row first
+    try:
+        df = pd.read_csv(raw, dtype=str)  # read as strings first; coerce later
+        # Attempt to normalise headers
+        norm = _normalise_headers(df.columns)
+        if norm is not None:
+            df.columns = norm
+        else:
+            # If headers look wrong, re-read without header and assign canonical names
+            raw.seek(0) if hasattr(raw, "seek") else None
+            df = pd.read_csv(raw, header=None)
+            # If column count matches canonical, assign; else pad/truncate
+            if df.shape[1] >= len(PPD_CANONICAL_COLUMNS):
+                df = df.iloc[:, :len(PPD_CANONICAL_COLUMNS)]
+            else:
+                # pad missing columns
+                for _ in range(len(PPD_CANONICAL_COLUMNS) - df.shape[1]):
+                    df[df.shape[1]] = np.nan
+            df.columns = PPD_CANONICAL_COLUMNS
+    except Exception:
+        # Fallback: try with no header directly
+        raw = io.BytesIO(uploaded) if uploaded is not None else "data/gloucestershire.csv"
+        df = pd.read_csv(raw, header=None)
+        if df.shape[1] >= len(PPD_CANONICAL_COLUMNS):
+            df = df.iloc[:, :len(PPD_CANONICAL_COLUMNS)]
+        else:
+            for _ in range(len(PPD_CANONICAL_COLUMNS) - df.shape[1]):
+                df[df.shape[1]] = np.nan
+        df.columns = PPD_CANONICAL_COLUMNS
+
+    # Step 2: enforce schema + defaults
+    df = _coerce_schema(df)
     df = _coerce_datetime(df)
     df = _standardise_strings(df)
     df = _expand_hmlr_columns(df)
@@ -210,13 +366,12 @@ st.markdown(
 
 st.info(
     "Use this dashboard to understand housing trends, compare areas, and inspect streets/postcodes.\n"
-    "Use the filters on the left to focus on a time period, geography, and property characteristics."
-)
-st.info(
+    "Use the filters on the left to focus on a time period, geography, and property characteristics.\n\n"
     "Data Source: [UK Government Price Paid Data]"
     "(https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads). "
-    "Dataset filtered to show housing trends for **Gloucestershire**."
 )
+
+st.warning("Current data filtered to show housing trends for **Gloucestershire**. Feel free to download any file from uk price paid housing data, and upload via sidebar for analysis.")
 
 with st.sidebar:
     st.header("Data")
