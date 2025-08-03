@@ -7,9 +7,15 @@ def page_header(
 ):
     st.title(title)
     st.markdown(author_md)
-    st.info(intro_md)
+
+    # Intro info box with expander
+    with st.expander("ℹ About this page", expanded=True):
+        st.info(intro_md)
+
+    # Optional notice with expander
     if notice_md:
-        st.warning(notice_md)
+        with st.expander("⚠ Important notice", expanded=True):
+            st.warning(notice_md)
 
 
 def kpi(label: str, value, delta: str | None = None, help: str | None = None):

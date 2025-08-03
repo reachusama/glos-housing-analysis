@@ -52,10 +52,10 @@ with st.sidebar:
         "Choose a section:",
         [
             "KPIs",
+            "Street / Postcode detail",
             "Trends & Seasonality",
             "Distributions",
             "Area Rankings",
-            "Street / Postcode detail",
             "Outliers & Data quality",
             "Hedonic model",
             "Repeat-sales",
