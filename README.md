@@ -13,8 +13,8 @@ This dashboard **does not ship with full data**. You must manually download UK P
 📎 [Price Paid Data – GOV.UK](https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads)
 
 * Choose **CSV format**
-* You can select individual months or the full historical archive
-* This tool supports any region, but the default demo shows Gloucestershire
+* You can select individual months or the full historical archive. [Note: App will not support full dataset.]
+* This tool supports any region, but the default demo shows Gloucestershire.
 
 Once downloaded, upload the CSV via the **"Upload dataset"** section in the Streamlit sidebar.
 
