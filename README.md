@@ -62,7 +62,20 @@ This app is built for users interested in:
 
 ---
 
+## Future Plan
+
+- [ ] Refine app to produce value/impact & optimise UX
+- [ ] Integrate EPC Data for analysis
+- [ ] Host SQL server for full housing price + EPC data
+- [ ] Migrate from public cloud to custom instance
+- [ ] Deploy project to custom domain
+- [ ] Create automation script for auto-sync of new data
+
+
+---
+
 ## Data Access URL
 ```angular2html
 http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}.csv
+https://epc.opendatacommunities.org/docs/guidance#field_domestic_NUMBER_HABITABLE_ROOMS
 ```
