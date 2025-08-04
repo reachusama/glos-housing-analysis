@@ -30,7 +30,7 @@ page_header(
         "(https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads)."
     ),
     notice_md=(
-        "Current data filtered to show housing trends for **Gloucestershire**. "
+        "Current data filtered to show housing trends for 2024 and 2025. "
         "Upload any UK Price Paid CSV via the sidebar to analyze it here."
     ),
 )
@@ -52,10 +52,10 @@ with st.sidebar:
         "Choose a section:",
         [
             "KPIs",
-            "Street / Postcode detail",
-            "Trends & Seasonality",
-            "Distributions",
             "Area Rankings",
+            "Trends & Seasonality",
+            "Street / Postcode detail",
+            "Distributions",
             "Outliers & Data quality",
             "Hedonic model",
             "Repeat-sales",

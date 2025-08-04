@@ -120,7 +120,7 @@ def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
     if uploaded is not None:
         raw = io.BytesIO(uploaded)
     else:
-        raw = "data/gloucestershire.csv"
+        raw = "data/pp_2024_2025_combined.csv"
     try:
         df = pd.read_csv(raw, dtype=str)
         norm = _normalise_headers(df.columns)
@@ -137,7 +137,7 @@ def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
             df.columns = PPD_CANONICAL_COLUMNS
     except Exception:
         raw = (
-            io.BytesIO(uploaded) if uploaded is not None else "data/gloucestershire.csv"
+            io.BytesIO(uploaded) if uploaded is not None else "data/pp_2024_2025_combined.csv"
         )
         df = pd.read_csv(raw, header=None)
         if df.shape[1] >= len(PPD_CANONICAL_COLUMNS):
