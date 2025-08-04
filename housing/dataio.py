@@ -9,7 +9,7 @@ import streamlit as st
 
 hostname = socket.gethostname()
 if "Usamas-MacBook-Air.local" == hostname:
-    DATASET_TO_USE = "pp_2020_2025_combined.csv"
+    DATASET_TO_USE = "pp_2022_2025_combined.csv"
 else:
     DATASET_TO_USE = "pp_2024_2025_combined.csv"
 
