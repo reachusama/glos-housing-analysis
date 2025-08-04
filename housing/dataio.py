@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+DATASET_TO_USE = 'pp_2024_2025_combined.csv'
 PPD_CANONICAL_COLUMNS = [
     "Transaction ID",
     "Price",
@@ -120,7 +121,7 @@ def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
     if uploaded is not None:
         raw = io.BytesIO(uploaded)
     else:
-        raw = "data/pp_2024_2025_combined.csv"
+        raw = f"data/{DATASET_TO_USE}"
     try:
         df = pd.read_csv(raw, dtype=str)
         norm = _normalise_headers(df.columns)
@@ -137,7 +138,7 @@ def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
             df.columns = PPD_CANONICAL_COLUMNS
     except Exception:
         raw = (
-            io.BytesIO(uploaded) if uploaded is not None else "data/pp_2024_2025_combined.csv"
+            io.BytesIO(uploaded) if uploaded is not None else f"data/{DATASET_TO_USE}"
         )
         df = pd.read_csv(raw, header=None)
         if df.shape[1] >= len(PPD_CANONICAL_COLUMNS):
@@ -163,7 +164,7 @@ def load_data(uploaded: Optional[bytes]) -> pd.DataFrame:
             r"^([A-Z]{1,2}\d{1,2}[A-Z]?)\s*(\d)", expand=True
         )[1]
         df["Postcode Sector"] = (
-            df["Outward"].fillna("") + " " + df["Sector"].fillna("")
+                df["Outward"].fillna("") + " " + df["Sector"].fillna("")
         ).str.strip()
     df["ADDRESS_ID"] = addr_id(df)
     return df.dropna(subset=["Price", "Date of Transfer"]).copy()
