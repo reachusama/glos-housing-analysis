@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-import streamlit as st
 import plotly.express as px
+import streamlit as st
 
 from ...charts import bar
 from ...metrics import yoy_median
@@ -48,8 +48,12 @@ def render(base: pd.DataFrame, price_col: str):
     # Only show time comparisons if >1 year present
     if base["Year"].nunique() > 1:
         st.markdown("### Price Trends Over Time")
-        time_group = base.groupby(["Year", "Month Name"])[price_col].median().reset_index()
-        time_group["Month Number"] = pd.to_datetime(time_group["Month Name"], format='%B').dt.month
+        time_group = (
+            base.groupby(["Year", "Month Name"])[price_col].median().reset_index()
+        )
+        time_group["Month Number"] = pd.to_datetime(
+            time_group["Month Name"], format="%B"
+        ).dt.month
         time_group = time_group.sort_values(["Year", "Month Number"])
         fig_price_time = px.line(
             time_group,
@@ -57,13 +61,17 @@ def render(base: pd.DataFrame, price_col: str):
             y=price_col,
             color="Year",
             markers=True,
-            title="Median Sale Price by Month (Year Comparison)"
+            title="Median Sale Price by Month (Year Comparison)",
         )
         st.plotly_chart(fig_price_time, use_container_width=True)
 
         st.markdown("### Number of Transactions per Month")
-        tx_group = base.groupby(["Year", "Month Name"]).size().reset_index(name="Transactions")
-        tx_group["Month Number"] = pd.to_datetime(tx_group["Month Name"], format='%B').dt.month
+        tx_group = (
+            base.groupby(["Year", "Month Name"]).size().reset_index(name="Transactions")
+        )
+        tx_group["Month Number"] = pd.to_datetime(
+            tx_group["Month Name"], format="%B"
+        ).dt.month
         tx_group = tx_group.sort_values(["Year", "Month Number"])
         fig_tx = px.bar(
             tx_group,
@@ -71,13 +79,15 @@ def render(base: pd.DataFrame, price_col: str):
             y="Transactions",
             color="Year",
             barmode="group",
-            title="Monthly Transactions by Year"
+            title="Monthly Transactions by Year",
         )
         st.plotly_chart(fig_tx, use_container_width=True)
 
     # Consistent location selection for all location-based charts
     st.markdown("### Location-Based Analysis")
-    location_type = st.selectbox("Choose Location Level", ["District", "County", "Town/City"])
+    location_type = st.selectbox(
+        "Choose Location Level", ["District", "County", "Town/City"]
+    )
 
     location_group = (
         base.groupby(location_type)[price_col]
@@ -106,7 +116,7 @@ def render(base: pd.DataFrame, price_col: str):
         orientation="h",
         title=f"{'Top 20 ' if len(location_group) > 25 else ''}{location_type}s by Median Price",
         labels={location_type: location_type, "median": "Median Price (£)"},
-        height=dynamic_height(len(top_prices))
+        height=dynamic_height(len(top_prices)),
     )
     st.plotly_chart(fig_location_price, use_container_width=True)
 
@@ -127,24 +137,32 @@ def render(base: pd.DataFrame, price_col: str):
         orientation="h",
         title=f"{'Top 20 ' if len(location_group) > 25 else ''}{location_type}s by Transaction Volume",
         labels={"count": "Number of Transactions"},
-        height=dynamic_height(len(top_tx))
+        height=dynamic_height(len(top_tx)),
     )
     st.plotly_chart(fig_location_tx, use_container_width=True)
 
     # Top price growth (only if >1 year present)
     if base["Year"].nunique() > 1:
         # st.markdown(f"### Top {location_type}s by Price Growth")
-        growth_group = base.groupby([location_type, "Year"])[price_col].median().reset_index()
-        growth_pivot = growth_group.pivot(index=location_type, columns="Year", values=price_col).dropna()
+        growth_group = (
+            base.groupby([location_type, "Year"])[price_col].median().reset_index()
+        )
+        growth_pivot = growth_group.pivot(
+            index=location_type, columns="Year", values=price_col
+        ).dropna()
 
         if latest_year in growth_pivot.columns and prev_year in growth_pivot.columns:
             growth_pivot["Growth %"] = (
-                (growth_pivot[latest_year] - growth_pivot[prev_year]) /
-                growth_pivot[prev_year]
+                (growth_pivot[latest_year] - growth_pivot[prev_year])
+                / growth_pivot[prev_year]
             ) * 100
 
             if len(growth_pivot) > 25:
-                top_growth = growth_pivot.sort_values("Growth %", ascending=False).head(20).reset_index()
+                top_growth = (
+                    growth_pivot.sort_values("Growth %", ascending=False)
+                    .head(20)
+                    .reset_index()
+                )
             else:
                 top_growth = growth_pivot.reset_index()
 
@@ -155,6 +173,6 @@ def render(base: pd.DataFrame, price_col: str):
                 orientation="h",
                 title=f"{'Top 20 ' if len(growth_pivot) > 25 else ''}{location_type}s by Yearly Price Growth",
                 labels={"Growth %": "Price Growth (%)"},
-                height=dynamic_height(len(top_growth))
+                height=dynamic_height(len(top_growth)),
             )
             st.plotly_chart(fig_growth, use_container_width=True)

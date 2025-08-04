@@ -1,15 +1,19 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-import numpy as np
 
 
 def render(base: pd.DataFrame, price_col: str):
     st.subheader("Street / Postcode Details")
-    st.caption("Step 1: Enter a postcode (or part of it), then choose a street to see insights.")
+    st.caption(
+        "Step 1: Enter a postcode (or part of it), then choose a street to see insights."
+    )
 
     # Step 1: Postcode filter
-    postcode_input = st.text_input("Enter postcode or partial postcode (case-insensitive)")
+    postcode_input = st.text_input(
+        "Enter postcode or partial postcode (case-insensitive)"
+    )
     filtered_by_postcode = base.copy()
 
     if postcode_input:
@@ -23,7 +27,7 @@ def render(base: pd.DataFrame, price_col: str):
         unique_streets = sorted(filtered_by_postcode["Street"].dropna().unique())
         selected_streets = st.multiselect(
             "Select one or more streets (leave empty to include all streets)",
-            options=unique_streets
+            options=unique_streets,
         )
     else:
         st.info("Enter a postcode to see available streets.")
@@ -60,10 +64,14 @@ def render(base: pd.DataFrame, price_col: str):
         with col4:
             st.metric(
                 "YoY Median Change",
-                f"{yoy_growth:.1f}%" if yoy_growth is not None else "N/A"
+                f"{yoy_growth:.1f}%" if yoy_growth is not None else "N/A",
             )
         with col5:
-            top_type = q["Property Type"].mode().iloc[0] if not q["Property Type"].mode().empty else "N/A"
+            top_type = (
+                q["Property Type"].mode().iloc[0]
+                if not q["Property Type"].mode().empty
+                else "N/A"
+            )
             st.metric("Most Common Type", top_type)
 
         # Highest transaction
@@ -121,7 +129,7 @@ def render(base: pd.DataFrame, price_col: str):
             y="Transactions",
             title="Number of Transactions by Year",
             labels={"Transactions": "Number of Sales"},
-            text="Transactions"
+            text="Transactions",
         )
         st.plotly_chart(fig_tx_year, use_container_width=True)
 
