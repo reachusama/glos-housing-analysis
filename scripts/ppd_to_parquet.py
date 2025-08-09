@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PPD (headerless .txt/.csv) -> Optimized Parquet via DuckDB
+Price Paid Data (PPD) (headerless .txt/.csv) -> Optimized Parquet via DuckDB
 
 - Streams via DuckDB (low memory)
 - Assigns canonical headers (no header in source)
