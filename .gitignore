@@ -11,3 +11,7 @@ __pycache__
 data/.DS_Store
 /data/pp_2020_2025_combined.csv
 data/pp_2022_2025_combined.csv
+.idea/
+.DS_Store
+/data/epc/
+/data/ppd/
