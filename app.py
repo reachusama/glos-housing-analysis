@@ -3,20 +3,15 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from housing.cleaning import winsorise
-from housing.dataio import load_data
-from housing.ui.components import page_header, section_help
-from housing.ui.sections import (
-    detail,
-    distributions,
+from src.v1.housing.cleaning import winsorise
+from src.v1.housing.dataio import load_data
+from src.v1.housing.ui.components import page_header
+from src.v1.housing.ui.sections import (
     hedonic,
     kpis,
-    mapview,
-    quality,
     rankings,
-    repeats,
-    trends,
 )
+from src.v1.housing.ui.sections import mapview, detail, trends, quality, distributions, repeats
 
 st.set_page_config(page_title="UK Housing Price Analysis", layout="wide")
 
