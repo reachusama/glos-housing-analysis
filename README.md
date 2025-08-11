@@ -8,7 +8,7 @@ Unlock the UK housing market’s hidden patterns — compare areas, track price 
 
 ### 1. Download UK Housing Data 
 
-P.S: I am changing this to utilise optimal storage, low-cost+high-speed query using free solutions to make it easy for users.
+P.S: I am changing this to utilise optimal cloud storage, low-cost+high-speed query using free solutions to make it easy for users.
 
 This dashboard **does not ship with full data**. You must manually download UK Price Paid Data from the official UK Government portal:
 
