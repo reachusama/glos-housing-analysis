@@ -1,4 +1,4 @@
-# housing/cleaning.py — data cleaning + helpers
+# cleaning.py — data cleaning + helpers
 import numpy as np
 import pandas as pd
 import streamlit as st

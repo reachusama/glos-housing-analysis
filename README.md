@@ -67,12 +67,12 @@ This app is built for users interested in:
 ## TODO
 
 - [x] Partition of EPC Certs Data for search and scale
-- [ ] Improve the PPD data by adding columns for search and scale
+- [x] Improve the PPD data by adding columns for search and scale
 - [ ] Create index for PPD & EPC
 - [ ] Create readme for data transformation, and upload to Huggingface
+- [ ] Create conversational app using agents to write query/code and execute via instances
+- [ ] Simplify communication/viz to only what supports user decision in uk housing investments
 - [ ] Re-write app to use duckdb and hugging face datasets
-- [ ] Integrate SQL agent with housing dataset into a conversational style
-- [ ] Refine app to produce value/impact & optimise UX
 - [ ] Migrate from public cloud to custom instance
 - [ ] Deploy project to custom domain
 - [ ] Create automation script for auto-sync of new data
