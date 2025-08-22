@@ -15,55 +15,6 @@ A curated **address base** (exported as `.parquet`) is used for training, valida
 
 ---
 
-## Example
-
-**Input**
-```
-
-Flat 2A, 12 Baker St, Marylebone, London NW1 6XE
-
-````
-
-**Output (JSON)**
-```json
-{
-  "SAON": "Flat 2A",
-  "PAON": "12",
-  "StreetName": "Baker Street",
-  "Locality": "Marylebone",
-  "PostTown": "LONDON",
-  "Postcode": "NW1 6XE"
-}
-````
-
----
-
-## Getting started
-
-### Requirements
-
-* Python 3.10+
-* See `pyproject.toml` or `requirements.txt`
-
-### Install
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Quick run
-
-```bash
-# Single string
-python -m address_parser.cli "Flat 2A, 12 Baker St, London NW1 6XE"
-
-# Batch file (CSV/Parquet with column ADDRESS)
-python -m address_parser.batch --input data/raw/epc_addresses.parquet --output reports/parsed.parquet
-```
-
----
-
 ## Data
 
 * **Training base**: exported housing dataset in `.parquet` with canonical fields.
@@ -108,26 +59,6 @@ python -m address_parser.batch --input data/raw/epc_addresses.parquet --output r
 
 You can keep the postcode/post-town checks and PAO/SAO regex logic for both models.
 
----
-
-## Training
-
-```bash
-# CRF
-python -m src.address_parser.train --config configs/crf.yaml
-
-# Transformer
-python -m src.address_parser.train --config configs/bert_crf.yaml
-```
-
-Each run writes to `experiments/exp_XXX/`:
-
-* `config.snapshot.yaml`
-* `metrics.json` (token/span F1, record-level accuracy)
-* `run.log`
-* exported model in `models/exported/`
-
----
 
 ## Roadmap
 
@@ -163,5 +94,3 @@ Their repository does not include trained models or datasets.
 
 * ONSdigital Address Index (reference code):
   [https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py](https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py)
-
-```
