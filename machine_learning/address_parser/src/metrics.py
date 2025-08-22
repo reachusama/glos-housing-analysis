@@ -13,14 +13,14 @@ Requirements
 Author
 ------
 
-:author: Sami Niemi (sami.niemi@valtech.co.uk)
+:author: Usama Shahid
 
 
 Version
 -------
 
-:version: 0.1
-:date: 25-Oct-2016
+:version: 0.2
+:date: 22-Aug-2025
 """
 
 

@@ -16,14 +16,14 @@ Requirements
 Author
 ------
 
-:author: Sami Niemi (sami.niemi@valtech.co.uk)
+:author: Usama Shahid
 
 
 Version
 -------
 
-:version: 0.2
-:date: 17-Nov-2016
+:version: 0.3
+:date: 22-Aug-2025
 """
 import pandas as pd
 from lxml import etree
@@ -99,11 +99,8 @@ df_synonyms = df_synonyms.dropna(subset=['from', 'to'])
 synonym_LUT = dict(
     zip(df_synonyms['from'].str.strip(), df_synonyms['to'].str.strip())
 )
-# # Create a dictionary for the synonyms.
-# synonym_LUT = dict(map(lambda x: x.split(','), synonyms))
 
 # get some extra info - possible incodes and the linked post towns, used to identify tokens
-
 postcode_district_to_town_path = os.path.join(data_dir, 'postcode_district_to_town.csv')
 df = pd.read_csv(postcode_district_to_town_path)
 OUTCODES = set(df['postcode'].values)
