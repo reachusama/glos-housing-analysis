@@ -34,7 +34,7 @@ import string
 
 # hardcoded filename and path
 directory = os.path.dirname(__file__)  # for relative path definitions
-data_dir = os.path.join(directory, '../data/helper')
+data_dir = os.path.join(directory, '../data/lookups')
 
 # set labels - token names expected in the training file
 LABELS = ['OrganisationName',
