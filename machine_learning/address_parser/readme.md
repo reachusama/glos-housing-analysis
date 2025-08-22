@@ -92,5 +92,4 @@ make lint test
 This project draws inspiration from ONSdigital’s Address Index work (parser structure and CRF approach).
 Their repository does not include trained models or datasets.
 
-* ONSdigital Address Index (reference code):
-  [https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py](https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py)
+* [ONSdigital Address Index (reference code)](https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py)
