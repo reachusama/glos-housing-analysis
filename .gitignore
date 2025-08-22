@@ -19,3 +19,4 @@ data/pp_2022_2025_combined.csv
 /data
 /address_parser/
 /machine_learning/address_parser/data/raw/ppd_addresses/
+/machine_learning/address_parser/data/interim/ppd_address_sql_v01.csv
