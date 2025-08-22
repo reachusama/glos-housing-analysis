@@ -2,6 +2,12 @@
  
 Unlock the UK housing market’s hidden patterns — compare areas, track price trends, and spot the best opportunities for buying, selling, or investing.
 
+https://data.police.uk/docs/
+https://www.planning.data.gov.uk/dataset/flood-risk-zone
+https://beta-find-and-use-an-api.education.gov.uk/api/explore-education-statistics-api-1
+https://explore-education-statistics.service.gov.uk/find-statistics?azsearch=true
+https://github.com/ONSdigital/address-index-data/blob/develop/DataScience/ProbabilisticParser/parser.py
+
 ---
 
 ## 📂 Getting Started
