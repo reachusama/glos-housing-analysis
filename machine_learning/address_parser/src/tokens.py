@@ -34,7 +34,7 @@ import string
 
 # hardcoded filename and path
 directory = os.path.dirname(__file__)  # for relative path definitions
-LUT_PATH = '../../data/addr_helper'
+data_dir = os.path.join(directory, '../data/helper')
 
 # set labels - token names expected in the training file
 LABELS = ['OrganisationName',
@@ -82,7 +82,6 @@ non_county = {'OFFICE', 'HOSPITAL', 'CARE', 'CLUB', 'BANK', 'BAR', 'SOCIETY', 'P
 noncounty = non_county | COMPANY | FLAT | Residential | ROAD
 nonCountyIdentification = list(noncounty)
 
-data_dir = os.path.join(directory, '../../data/addr_helper')
 counties_path = os.path.join(data_dir, 'counties.csv')
 df_counties = pd.read_csv(counties_path, usecols=['county'], dtype=str, encoding='utf-8-sig')
 county = (
@@ -106,7 +105,6 @@ synonym_LUT = dict(
 # get some extra info - possible incodes and the linked post towns, used to identify tokens
 
 postcode_district_to_town_path = os.path.join(data_dir, 'postcode_district_to_town.csv')
-print(postcode_district_to_town_path)
 df = pd.read_csv(postcode_district_to_town_path)
 OUTCODES = set(df['postcode'].values)
 POSTTOWNS = set(df['town'].values)
