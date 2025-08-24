@@ -16,15 +16,30 @@ from sklearn_crfsuite import metrics as crf_metrics
 import machine_learning.address_parser.src.tokens as tok
 import machine_learning.address_parser.src.metrics as metric
 
-MODEL_FILE = 'addressCRF.crfsuite'
-MODEL_PATH = '../configs/model/training'
+# ------------------------- Defaults -------------------------
+
+DEFAULTS = {
+    "model_name": "addressCRF.crfsuite",
+    "model_dir": "../configs/model/training",
+    "algorithm": "lbfgs",
+    "c1": 0.3,
+    "c2": 0.001,
+    "min_freq": 0.001,
+    "all_possible_transitions": True,
+    "random_state": 42,
+}
 
 
 # ------------------------- IO & data -------------------------
 
-def ensure_model_dir():
-    os.makedirs(MODEL_PATH, exist_ok=True)
-    return os.path.join(MODEL_PATH, MODEL_FILE)
+def ensure_model_path(model_dir: str | None = None, model_name: str | None = None) -> str:
+    """
+    Ensure the model directory exists and return the full file path.
+    """
+    model_dir = model_dir or DEFAULTS["model_dir"]
+    model_name = model_name or DEFAULTS["model_name"]
+    os.makedirs(model_dir, exist_ok=True)
+    return os.path.join(model_dir, model_name)
 
 
 def read_data(training_xml: str, holdout_xml: str, verbose: bool = True):
@@ -44,7 +59,8 @@ def read_data(training_xml: str, holdout_xml: str, verbose: bool = True):
 
 
 def maybe_subsample(X, Y, n: int | None, seed: int = 42):
-    if n is None or n >= len(X): return X, Y
+    if n is None or n >= len(X):
+        return X, Y
     rng = np.random.default_rng(seed)
     idx = rng.choice(len(X), size=n, replace=False)
     Xs = [X[i] for i in idx]
@@ -54,31 +70,26 @@ def maybe_subsample(X, Y, n: int | None, seed: int = 42):
 
 # ------------------------- Model helpers -------------------------
 
-
 def make_crf(
-        algorithm: str = "lbfgs",
-        c1: float = 0.3,
-        c2: float = 0.001,
-        min_freq: float = 0.001,
-        all_possible_transitions: bool = True,
+        algorithm: str = DEFAULTS["algorithm"],
+        c1: float = DEFAULTS["c1"],
+        c2: float = DEFAULTS["c2"],
+        min_freq: float = DEFAULTS["min_freq"],
+        all_possible_transitions: bool = DEFAULTS["all_possible_transitions"],
         max_iterations: int | None = None,
         epsilon: float | None = None,
         verbose: bool = True,
-        random_state: int | None = 42,  # will be filtered out if unsupported
+        random_state: int | None = DEFAULTS["random_state"],  # filtered if unsupported
         model_file_path: str | None = None,
 ):
     """
-    Build a CRF instance but only pass kwargs your installed sklearn-crfsuite supports.
-    This avoids errors like: TypeError: CRF.__init__() got an unexpected keyword 'random_state'
+    Build a CRF and only pass kwargs supported by your sklearn-crfsuite version.
     """
-    if model_file_path is None:
-        model_file_path = ensure_model_dir()
-
     # Base params (some may be dropped below if unsupported)
     params = dict(
         algorithm=algorithm,
-        c1=c1,  # used by lbfgs
-        c2=c2,  # used by lbfgs
+        c1=c1,
+        c2=c2,
         min_freq=min_freq,
         all_possible_transitions=all_possible_transitions,
         keep_tempfiles=True,
@@ -87,7 +98,6 @@ def make_crf(
         random_state=random_state,  # some versions support this, some don't
     )
 
-    # AP-specific (safe to include; will be filtered if not supported)
     if algorithm == "ap":
         params.update(dict(
             max_iterations=max_iterations or 5000,
@@ -128,17 +138,20 @@ def evaluate(crf, X_test, y_test, label_order=None, heading="Holdout performance
 def train(
         training_xml: str,
         holdout_xml: str,
-        algorithm: str = "lbfgs",
-        c1: float = 0.3,
-        c2: float = 0.001,
-        min_freq: float = 0.001,
-        all_possible_transitions: bool = True,
-        random_state: int = 42,
+        *,
+        algorithm: str = DEFAULTS["algorithm"],
+        c1: float = DEFAULTS["c1"],
+        c2: float = DEFAULTS["c2"],
+        min_freq: float = DEFAULTS["min_freq"],
+        all_possible_transitions: bool = DEFAULTS["all_possible_transitions"],
+        random_state: int = DEFAULTS["random_state"],
         verbose: bool = True,
         train_subset: int | None = None,
         eval_subset: int | None = None,
+        model_name: str | None = None,
+        model_dir: str | None = None,
 ):
-    model_path = ensure_model_dir()
+    model_path = ensure_model_path(model_dir=model_dir, model_name=model_name)
     X_train, y_train, X_test, y_test = read_data(training_xml, holdout_xml, verbose=verbose)
 
     X_train, y_train = maybe_subsample(X_train, y_train, train_subset, seed=random_state)
@@ -173,21 +186,24 @@ def train(
 def tune(
         training_xml: str,
         holdout_xml: str,
+        *,
         n_iter: int = 50,
         cv: int = 3,
-        random_state: int = 42,
+        random_state: int = DEFAULTS["random_state"],
         sequence_optimisation: bool = True,
-        min_freq: float = 0.001,
-        all_possible_transitions: bool = True,
+        min_freq: float = DEFAULTS["min_freq"],
+        all_possible_transitions: bool = DEFAULTS["all_possible_transitions"],
         train_subset: int | None = None,
         eval_subset: int | None = None,
         plot_path: str | None = None,
         pickle_path: str | None = None,
+        model_name: str | None = None,
+        model_dir: str | None = None,
 ):
     """
-    Randomised search over c1/c2 (LBFGS). Saves the best model to tok.MODEL_PATH/tok.MODEL_FILE.
+    Randomized search over c1/c2 (LBFGS). Saves the best model to <model_dir>/<model_name>.
     """
-    model_path = ensure_model_dir()
+    model_path = ensure_model_path(model_dir=model_dir, model_name=model_name)
     X_train, y_train, X_test, y_test = read_data(training_xml, holdout_xml, verbose=True)
 
     X_train, y_train = maybe_subsample(X_train, y_train, train_subset, seed=random_state)
@@ -211,11 +227,9 @@ def tune(
     if sequence_optimisation:
         scorer = make_scorer(metric.sequence_accuracy_score)
     else:
-        # Token-level weighted F1 over labels found in training folds
-        # (sklearn-crfsuite handles this internally)
         scorer = make_scorer(crf_metrics.flat_f1_score, average="weighted")
 
-    print("\nRandomised search (LBFGS) starting...")
+    print("\nRandomized search (LBFGS) starting...")
     rs = RandomizedSearchCV(
         base,
         param_distributions=param_space,
@@ -239,7 +253,10 @@ def tune(
 
     # Save the RandomizedSearchCV object (optional)
     if pickle_path is None:
-        pickle_path = os.path.join(tok.MODEL_PATH, "optimisation.pickle")
+        # keep next to the model by default
+        pickle_dir = model_dir or DEFAULTS["model_dir"]
+        os.makedirs(pickle_dir, exist_ok=True)
+        pickle_path = os.path.join(pickle_dir, "optimisation.pickle")
     try:
         with open(pickle_path, "wb") as fh:
             pickle.dump(rs, fh)
@@ -260,12 +277,12 @@ def tune(
             ys = np.array(cvr["param_c2"], dtype=float)
             cs = np.array(cvr["mean_test_score"], dtype=float)
             fig, ax = plt.subplots()
-            ax.set_xscale("log");
+            ax.set_xscale("log")
             ax.set_yscale("log")
             s = ax.scatter(xs, ys, c=cs, s=60, edgecolors="k", alpha=0.75)
-            ax.set_xlabel("c1");
+            ax.set_xlabel("c1")
             ax.set_ylabel("c2")
-            ax.set_title("Randomised Search CV Results")
+            ax.set_title("Randomized Search CV Results")
             fig.colorbar(s, ax=ax, label="mean_test_score")
             plt.tight_layout()
             plt.savefig(plot_path)
@@ -288,27 +305,29 @@ def build_arg_parser():
     def add_common(sp):
         sp.add_argument("--train-xml", required=True, help="Path to training XML")
         sp.add_argument("--holdout-xml", required=True, help="Path to holdout XML")
-        sp.add_argument("--seed", type=int, default=42)
+        sp.add_argument("--seed", type=int, default=DEFAULTS["random_state"])
         sp.add_argument("--train-subset", type=int, default=None, help="Use only N training sequences (speed-up)")
         sp.add_argument("--eval-subset", type=int, default=None, help="Use only N holdout sequences (speed-up)")
+        sp.add_argument("--model-name", default=DEFAULTS["model_name"], help="Model file name")
+        sp.add_argument("--model-dir", default=DEFAULTS["model_dir"], help="Directory to save the model")
 
     # train
     sp_tr = sub.add_parser("train", help="Train a CRF with fixed hyperparameters")
     add_common(sp_tr)
-    sp_tr.add_argument("--algo", choices=["lbfgs", "ap"], default="lbfgs")
-    sp_tr.add_argument("--c1", type=float, default=0.3)
-    sp_tr.add_argument("--c2", type=float, default=0.001)
-    sp_tr.add_argument("--min-freq", type=float, default=0.001)
+    sp_tr.add_argument("--algo", choices=["lbfgs", "ap"], default=DEFAULTS["algorithm"])
+    sp_tr.add_argument("--c1", type=float, default=DEFAULTS["c1"])
+    sp_tr.add_argument("--c2", type=float, default=DEFAULTS["c2"])
+    sp_tr.add_argument("--min-freq", type=float, default=DEFAULTS["min_freq"])
     sp_tr.add_argument("--no-all-transitions", action="store_true", help="Disable all_possible_transitions")
     sp_tr.add_argument("--quiet", action="store_true")
 
     # tune
-    sp_tu = sub.add_parser("tune", help="Randomised search over c1/c2 (LBFGS)")
+    sp_tu = sub.add_parser("tune", help="Randomized search over c1/c2 (LBFGS)")
     add_common(sp_tu)
     sp_tu.add_argument("--n-iter", type=int, default=50)
     sp_tu.add_argument("--cv", type=int, default=3)
     sp_tu.add_argument("--seq-opt", action="store_true", help="Optimise for sequence accuracy (default token F1)")
-    sp_tu.add_argument("--min-freq", type=float, default=0.001)
+    sp_tu.add_argument("--min-freq", type=float, default=DEFAULTS["min_freq"])
     sp_tu.add_argument("--plot", default=None, help="Path to save a PNG of the search surface")
     sp_tu.add_argument("--pickle", default=None, help="Where to pickle the RandomizedSearchCV object")
     return p
@@ -330,6 +349,8 @@ def main():
             verbose=not args.quiet,
             train_subset=args.train_subset,
             eval_subset=args.eval_subset,
+            model_name=args.model_name,
+            model_dir=args.model_dir,
         )
     elif args.cmd == "tune":
         tune(
@@ -345,6 +366,8 @@ def main():
             eval_subset=args.eval_subset,
             plot_path=args.plot,
             pickle_path=args.pickle,
+            model_name=args.model_name,
+            model_dir=args.model_dir,
         )
 
 

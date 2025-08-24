@@ -1,127 +1,131 @@
 """
 ONS Address Index - Probabilistic Parser
-========================================
 
-This file defines the calling mechanism for a trained probabilistic parser model.
-It also implements a simple test. Note that the results are model dependent, so
-the assertions will fail if a new model is trained.
-
+This module exposes parsing helpers for a CRFsuite address model.
+- No embedded tests or prints.
+- No hardcoded model path: pass it into each call.
+- Efficient: taggers are cached per-model to avoid repeated opens.
 
 Requirements
 ------------
+pycrfsuite (https://python-crfsuite.readthedocs.io/en/latest/)
 
-:requires: pycrfsuite (https://python-crfsuite.readthedocs.io/en/latest/)
-
-
-Author
-------
-
-:author: Usama Shahid
-
-
-Version
--------
-
-:version: 0.4
-:date: 22-Aug-2025
+Author: Usama Shahid
+Version: 0.5 (24-Aug-2025)
 """
-# parser.py (safe version)
-import os
-import sys
-from collections import OrderedDict
+from __future__ import annotations
 
-import machine_learning.address_parser.src.tokens as tok
+from functools import lru_cache
+from typing import List, Tuple, Dict, Any
 import pycrfsuite
 
-# ---- paths ----
-MODEL_FILE = 'addressCRF.crfsuite'
-# Resolve relative to this file so imports from notebooks work
-_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.abspath(os.path.join(_THIS_DIR, '../configs/model/training'))
-MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILE)
+# You can still use the same tokens module by default, but callers may override.
+import machine_learning.address_parser.src.tokens as default_tok
 
-# ---- load tagger ----
-try:
-    TAGGER = pycrfsuite.Tagger()
-    TAGGER.open(MODEL_PATH)
-    print('Using model from', MODEL_PATH)
-except Exception as e:
-    print(f'ERROR: cannot open CRF model at {MODEL_PATH}\n{e}')
-    sys.exit(-9)
+
+# ---- tagger management ----
+@lru_cache(maxsize=8)
+def _get_tagger(model_path: str) -> pycrfsuite.Tagger:
+    """
+    Lazily create and cache a pycrfsuite.Tagger for the given model path.
+    Raises an exception if the model cannot be opened.
+    """
+    tagger = pycrfsuite.Tagger()
+    tagger.open(model_path)  # pycrfsuite throws if the path is invalid/corrupt
+    return tagger
 
 
 # ---- internals ----
-def _parse(raw_string):
+def _parse(raw: str, model_path: str, tok=default_tok) -> Tuple[List[str], List[str]]:
     """
-    Return (tokens, tags). If the input yields no tokens, return ([], []).
+    Return (tokens, tags). If input yields no tokens, return ([], []).
     """
-    tokens = tok.tokenize(raw_string)
+    tokens: List[str] = tok.tokenize(raw)
     if not tokens:
         return [], []
 
     features = tok.tokens2features(tokens)
-    # pycrfsuite requires non-empty features; guard just in case
     if not features:
         return tokens, []
 
-    tags = TAGGER.tag(features)
+    tagger = _get_tagger(model_path)
+    tags: List[str] = tagger.tag(features)
     return tokens, tags
 
 
 # ---- public API ----
-def parse(raw_string):
+def parse(raw: str, model_path: str, tok=default_tok) -> List[Tuple[str, str]]:
     """
     Return a list of (token, label) pairs. Empty list for empty/untaggable input.
+
+    Args:
+        raw: Free-text address string.
+        model_path: Filesystem path to the .crfsuite model file.
+        tok: Tokenization/feature module (must provide tokenize, tokens2features).
+
+    Example:
+        parse("FLAT 2 10 QUEEN STREET BURY BL8 1JG", "/models/addressCRF.crfsuite")
     """
-    tokens, tags = _parse(raw_string)
+    tokens, tags = _parse(raw, model_path, tok)
     if not tokens or not tags:
         return []
     return list(zip(tokens, tags))
 
 
-def parse_with_marginal_probability(raw_string):
+def parse_with_marginal_probability(
+        raw: str, model_path: str, tok=default_tok
+) -> List[Tuple[str, str, float]]:
     """
     Return a list of (token, label, marginal_prob). Empty list if untaggable.
     """
-    tokens, tags = _parse(raw_string)
+    tokens, tags = _parse(raw, model_path, tok)
     if not tokens or not tags:
         return []
-    marginals = [TAGGER.marginal(tag, i) for i, tag in enumerate(tags)]
+    tagger = _get_tagger(model_path)
+    marginals = [tagger.marginal(tag, i) for i, tag in enumerate(tags)]
     return list(zip(tokens, tags, marginals))
 
 
-def parse_with_probabilities(raw_string):
+def parse_with_probabilities(
+        raw: str, model_path: str, tok=default_tok
+) -> Dict[str, Any]:
     """
-    Return an OrderedDict with tokens, tags, marginal_probabilities, sequence_probability.
+    Return a dict with:
+      - tokens: List[str]
+      - tags: List[str]
+      - marginal_probabilities: List[float]
+      - sequence_probability: float
+
     If untaggable, returns empty arrays and probability 0.0.
     """
-    tokens, tags = _parse(raw_string)
+    tokens, tags = _parse(raw, model_path, tok)
     if not tokens or not tags:
-        return OrderedDict(tokens=[],
-                           tags=[],
-                           marginal_probabilites=[],
-                           sequence_probability=0.0)
-    marginals = [TAGGER.marginal(tag, i) for i, tag in enumerate(tags)]
-    seq_p = TAGGER.probability(tags)
-    return OrderedDict(tokens=tokens,
-                       tags=tags,
-                       marginal_probabilites=marginals,
-                       sequence_probability=seq_p)
+        return {
+            "tokens": [],
+            "tags": [],
+            "marginal_probabilities": [],
+            "sequence_probability": 0.0,
+        }
+
+    tagger = _get_tagger(model_path)
+    marginals = [tagger.marginal(tag, i) for i, tag in enumerate(tags)]
+    seq_p = tagger.probability(tags)
+    return {
+        "tokens": tokens,
+        "tags": tags,
+        "marginal_probabilities": marginals,
+        "sequence_probability": seq_p,
+    }
 
 
-def tag(raw_string):
+def tag(raw: str, model_path: str, tok=default_tok) -> Dict[str, str]:
     """
-    Return an OrderedDict label -> 'joined tokens'. Empty dict if untaggable.
+    Return a dict: label -> 'joined tokens'. Empty dict if untaggable.
+    Trailing punctuation/commas/semicolons are stripped from each component.
     """
-    out = OrderedDict()
-    for token, label in parse(raw_string):
+    out: Dict[str, List[str]] = {}
+    for token, label in parse(raw, model_path, tok):
         out.setdefault(label, []).append(token)
-    for label in list(out.keys()):
-        component = ' '.join(out[label]).strip(' ,;')
-        out[label] = component
-    return out
 
-
-# Optional quick check
-if __name__ == "__main__":
-    print(tag("FLAT 2 10 QUEEN STREET BURY BL8 1JG"))
+    # Join and tidy
+    return {label: " ".join(parts).strip(" ,;") for label, parts in out.items()}
